@@ -61,6 +61,9 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
     private Double mCurLon;
     private Location mCurDest;
     private Location mCurLoc;
+    private float[] rMat = new float[9];
+    private int mAzimuth = 0;
+    float[] orientation = new float[3];
 
     final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
 
@@ -94,7 +97,7 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
     }
 
     private void registerSensorListener() {
-        mSensorManager.registerListener(this, mOrientation, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(this, mOrientation, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     private void unregisterSensorListener() {
@@ -210,33 +213,78 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
     public void onSensorChanged(SensorEvent event){
 
 
-
         float azimuth = event.values[0];
-        float baseAzimuth = azimuth;
+       // azimuth = (float) Math.toDegrees(azimuth);
 
         GeomagneticField geoField = new GeomagneticField( Double
-                .valueOf( mCurDest.getLatitude() ).floatValue(), Double
-                .valueOf( mCurDest.getLongitude() ).floatValue(),
-                Double.valueOf( mCurDest.getAltitude() ).floatValue(),
+                .valueOf( mCurLoc.getLatitude() ).floatValue(), Double
+                .valueOf( mCurLoc.getLongitude() ).floatValue(),
+                Double.valueOf( mCurLoc.getAltitude() ).floatValue(),
                 System.currentTimeMillis() );
 
-        azimuth -= geoField.getDeclination();
+        float[] v = event.values;
 
+        double lat=mCurDest.getLatitude();
+        double lon=mCurDest.getLongitude();
+
+        //The current location of the device, retrieved from another class managing GPS
+        double ourlat=  mCurLoc.getLatitude();
+        double ourlon=  mCurLoc.getLongitude();
+
+        //Manually calculate the direction of the pile from the device
+        double a= Math.abs((lon-ourlon));
+        double b= Math.abs((lat-ourlat));
+        //archtangent of a/b is equal to the angle of the device from 0-degrees in the first quadrant. (Think of a unit circle)
+        double thetaprime= Math.atan(a/b);
+        double theta= 0;
+
+        if((lat<ourlat)&&(lon>ourlon)){//-+
+            //theta is 180-thetaprime because it is in the 2nd quadrant
+            theta= ((Math.PI)-thetaprime);
+
+            //subtract theta from the compass value retrieved from the sensor to get our final direction
+            theta=theta - Math.toRadians(v[0]);
+
+        }else if((lat<ourlat)&&(lon<ourlon)){//--
+            //Add 180 degrees because it is in the third quadrant
+            theta= ((Math.PI)+thetaprime);
+
+            //subtract theta from the compass value retreived from the sensor to get our final direction
+            theta=theta - Math.toRadians(v[0]);
+
+        }else if((lat>ourlat)&&(lon>ourlon)){ //++
+            //No change is needed in the first quadrant
+            theta= thetaprime;
+
+            //subtract theta from the compass value retreived from the sensor to get our final direction
+            theta=theta - Math.toRadians(v[0]);
+
+        }else if((lat>ourlat)&&(lon<ourlon)){ //+-
+            //Subtract thetaprime from 360 in the fourth quadrant
+            theta= ((Math.PI*2)-thetaprime);
+
+            //subtract theta from the compass value retreived from the sensor to get our final direction
+            theta=theta - Math.toRadians(v[0]);
+
+        }
+
+        azimuth = (float) Math.toDegrees(theta);
+
+        /*
+        float myBearing = mCurLoc.bearingTo(mCurDest);
+        //azimuth += geoField.getDeclination();
+        azimuth = (myBearing - azimuth) * -1;
+
+        while (azimuth < 0)
+            azimuth += 360;
+        while (azimuth >= 360)
+            azimuth -= 360;
+*/
+        mCompassImage.setRotation(azimuth);
 
         //This is where we choose to point it
-        float bearTo = mCurLoc.bearingTo(mCurDest);
-        if ( bearTo < 0 ){
-            bearTo = bearTo + 360;
-        }
 
-
-        float direction = bearTo - azimuth;
-
-        if ( direction < 0){
-            direction += 360;
-        }
-
-
+/*
         RotateAnimation ra = new RotateAnimation(mCurrentDegree, direction,
                 Animation.RELATIVE_TO_SELF, 0.5f,
                 Animation.RELATIVE_TO_SELF,
@@ -244,31 +292,12 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
         ra.setDuration(210);
         ra.setFillAfter(true);
         mCompassImage.startAnimation(ra);
+*/
 
-
-        Log.d(TAG, "Direction: "+String.valueOf(direction)+" Azimuth: "+String.valueOf(azimuth));
-        String setText = "Direction: "+String.valueOf(direction)+" Azimuth: "+String.valueOf(azimuth);
+        Log.d(TAG, "Azimuth: "+String.valueOf(azimuth));
+        String setText = "Azimuth: "+String.valueOf(azimuth);
         mBearing.setText(setText);
 
-
-        //mCurrentDegree = direction;
-        /*
-        RotateAnimation ra = new RotateAnimation(
-                mCurrentDegree,
-                -degree,
-                Animation.RELATIVE_TO_SELF, 0.5f,
-                Animation.RELATIVE_TO_SELF,
-                0.5f);
-
-        ra.setDuration(210);
-        ra.setFillAfter(true);
-
-
-        mCompassImage.startAnimation(ra);
-        mCurrentDegree = -degree;
-
-        R.id.imageViewCompass
-        */
 
     }
 
@@ -290,9 +319,10 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
 
     @Override
     public void onLocationChanged(Location location){
-        
-        mCurLoc.setLongitude(location.getLongitude());
-        mCurLoc.setLatitude(location.getLatitude());
+
+        mCurLoc = location;
+        //mCurLoc.setLongitude(location.getLongitude());
+        //mCurLoc.setLatitude(location.getLatitude());
 
     }
 
