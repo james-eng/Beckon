@@ -1,6 +1,13 @@
 package org.orangeresearch.beckon;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
+import android.hardware.GeomagneticField;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -10,7 +17,11 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,7 +39,7 @@ import android.widget.TextView;
  * Use the {@link CompassFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class CompassFragment extends Fragment implements SensorEventListener, LocationListener {
+public class CompassFragment extends Fragment implements  LocationListener, SensorEventListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -36,6 +47,7 @@ public class CompassFragment extends Fragment implements SensorEventListener, Lo
 
 
     // JAMES Added Member Variables
+    private static final String TAG = "COMPASS FRAGMENT";
     private Beckon mBeckon;
     private TextView mTitleField;
     private TextView mBearing;
@@ -45,8 +57,12 @@ public class CompassFragment extends Fragment implements SensorEventListener, Lo
     private Context mContext;
     private LocationManager mLocationManager;
     private float mCurrentDegree;
+    private Double mCurLat;
+    private Double mCurLon;
+    private Location mCurDest;
+    private Location mCurLoc;
 
-
+    final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
 
 
     // TODO: Rename and change types of parameters
@@ -90,7 +106,22 @@ public class CompassFragment extends Fragment implements SensorEventListener, Lo
         super.onCreate(savedInstanceState);
         mBeckon = new Beckon();
         mSensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
-        mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+        mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+
+        mCurDest = new Location("PROVIDED");
+        mCurLoc = new Location("GPS");
+        mCurDest.setLatitude(Double.parseDouble(mBeckon.getLat()));
+        mCurDest.setLongitude(Double.parseDouble(mBeckon.getLon()));
+
+        int hasGpsPermission = ContextCompat.checkSelfPermission(this.getActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION);
+
+        if ( hasGpsPermission != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this.getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_CODE_ASK_PERMISSIONS);
+        }
+
         mLocationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
 
         if ( mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
@@ -169,6 +200,7 @@ public class CompassFragment extends Fragment implements SensorEventListener, Lo
         void onFragmentInteraction(Uri uri);
     }
 
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy){
         // PURPOSELY BLANK
@@ -176,7 +208,51 @@ public class CompassFragment extends Fragment implements SensorEventListener, Lo
 
     @Override
     public void onSensorChanged(SensorEvent event){
-        float degree = Math.round(event.values[0]);
+
+
+
+        float azimuth = event.values[0];
+        float baseAzimuth = azimuth;
+
+        GeomagneticField geoField = new GeomagneticField( Double
+                .valueOf( mCurDest.getLatitude() ).floatValue(), Double
+                .valueOf( mCurDest.getLongitude() ).floatValue(),
+                Double.valueOf( mCurDest.getAltitude() ).floatValue(),
+                System.currentTimeMillis() );
+
+        azimuth -= geoField.getDeclination();
+
+
+        //This is where we choose to point it
+        float bearTo = mCurLoc.bearingTo(mCurDest);
+        if ( bearTo < 0 ){
+            bearTo = bearTo + 360;
+        }
+
+
+        float direction = bearTo - azimuth;
+
+        if ( direction < 0){
+            direction += 360;
+        }
+
+
+        RotateAnimation ra = new RotateAnimation(mCurrentDegree, direction,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF,
+                0.5f);
+        ra.setDuration(210);
+        ra.setFillAfter(true);
+        mCompassImage.startAnimation(ra);
+
+
+        Log.d(TAG, "Direction: "+String.valueOf(direction)+" Azimuth: "+String.valueOf(azimuth));
+        String setText = "Direction: "+String.valueOf(direction)+" Azimuth: "+String.valueOf(azimuth);
+        mBearing.setText(setText);
+
+
+        //mCurrentDegree = direction;
+        /*
         RotateAnimation ra = new RotateAnimation(
                 mCurrentDegree,
                 -degree,
@@ -190,6 +266,9 @@ public class CompassFragment extends Fragment implements SensorEventListener, Lo
 
         mCompassImage.startAnimation(ra);
         mCurrentDegree = -degree;
+
+        R.id.imageViewCompass
+        */
 
     }
 
@@ -208,13 +287,13 @@ public class CompassFragment extends Fragment implements SensorEventListener, Lo
         this.unregisterSensorListener();
     }
 
+
     @Override
     public void onLocationChanged(Location location){
         
-        Double curLat = location.getLatitude();
-        Double curLon = location.getLongitude();
-        String curLoc = curLat.toString() + " " + curLon.toString();
-        mBearing.setText(curLoc);
+        mCurLoc.setLongitude(location.getLongitude());
+        mCurLoc.setLatitude(location.getLatitude());
+
     }
 
     @Override

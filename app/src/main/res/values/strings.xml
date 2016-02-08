@@ -8,4 +8,7 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="arrow_pointer">Arrow</string>
+    <string name="beacon_title">Beacon Title</string>
+    <string name="bearing">Bearing</string>
 </resources>

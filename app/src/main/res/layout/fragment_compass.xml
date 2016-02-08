@@ -1,35 +1,35 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              tools:context="org.orangeresearch.beckon.CompassFragment"
-              android:orientation="vertical">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="org.orangeresearch.beckon.CompassFragment"
+    android:orientation="vertical">
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
         android:id="@+id/beacon_title"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:textAlignment="center"
-        android:layout_gravity="top"
         android:layout_margin="5dp"
-        android:text="Beacon Title"/>
+        android:text="@string/beacon_title"/>
+
+
+
+    <ImageView
+        android:id="@+id/imageViewCompass"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:src="@drawable/img_compass"
+        android:visibility="visible"
+        android:contentDescription="@string/arrow_pointer"/>
 
     <TextView
         android:id="@+id/beacon_bearing"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAlignment="center"
-        android:layout_margin="5dp"
-        android:text="Bearing"
-        android:gravity="bottom|center_horizontal"/>
+        android:text="@string/bearing"/>
 
-    <ImageView
-        android:id="@+id/imageViewCompass"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:src="@drawable/img_compass"
-        android:visibility="visible"/>
-
-</FrameLayout>
+</LinearLayout>
