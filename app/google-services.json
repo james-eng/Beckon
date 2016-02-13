@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_id": "beckon-5fd92",
+    "project_number": "644051316288",
+    "name": "Beckon"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:644051316288:android:a1ea145a55be8470",
+        "client_id": "android:org.orangeresearch.beckon",
+        "client_type": 1,
+        "android_client_info": {
+          "package_name": "org.orangeresearch.beckon"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "644051316288-ri2nrui3aqdkubfimpb7h0n6kas8jqn8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.orangeresearch.beckon",
+            "certificate_hash": "E8AAB21613C7C10A50486B3FEBC318A0050B8118"
+          }
+        },
+        {
+          "client_id": "644051316288-dto54gkmgffp5841hmak7titfca5v2ei.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [],
+      "services": {
+        "analytics_service": {
+          "status": 2,
+          "analytics_property": {
+            "tracking_id": "UA-73739652-1"
+          }
+        },
+        "cloud_messaging_service": {
+          "status": 2,
+          "apns_config": []
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "644051316288-dto54gkmgffp5841hmak7titfca5v2ei.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "google_signin_service": {
+          "status": 2
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "client_info": [],
+  "ARTIFACT_VERSION": "1"
+}

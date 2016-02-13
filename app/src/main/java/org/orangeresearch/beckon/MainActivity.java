@@ -7,6 +7,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.view.LayoutInflaterCompat;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -16,17 +17,34 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+
+import org.w3c.dom.Text;
 
 public class MainActivity extends FragmentActivity
         implements CompassFragment.OnFragmentInteractionListener,NavigationView.OnNavigationItemSelectedListener {
 
+    private GlobalState state;
+    private TextView mUserName;
+    private TextView mUserEmail;
+    private ImageView mUserImage;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        state = ((GlobalState) getApplication() );
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         // FIX THIS JAMES setSupportActionBar(toolbar);
 
+        /*
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -35,15 +53,29 @@ public class MainActivity extends FragmentActivity
                         .setAction("Action", null).show();
             }
         });
+        */
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
+
+
         toggle.syncState();
+
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        // SET UP LOGIN INFO ON APP DRAWER
+        View headerView = navigationView.getHeaderView(0);
+        mUserName = (TextView) headerView.findViewById(R.id.userName);
+        mUserName.setText(state.getAcct().getDisplayName());
+        mUserEmail = (TextView) headerView.findViewById(R.id.userEmail);
+        mUserEmail.setText(state.getAcct().getEmail());
+        mUserImage = (ImageView) headerView.findViewById(R.id.userImage);
+        mUserImage.setImageURI(state.getAcct().getPhotoUrl());
+
 
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentById(R.id.fragment_container);
@@ -104,6 +136,18 @@ public class MainActivity extends FragmentActivity
 
         } else if (id == R.id.nav_send) {
 
+        } else if (id == R.id.logout) {
+            /*
+            Auth.GoogleSignInApi.signOut(state.getGoogleApiClient()).setResultCallback(
+                    new ResultCallback<Status>() {
+                        @Override
+                        public void onResult(Status status) {
+                            // [START_EXCLUDE]
+                            //updateUI(false);
+                            // [END_EXCLUDE]
+                        }
+                    });
+            */
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

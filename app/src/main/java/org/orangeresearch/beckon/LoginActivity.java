@@ -35,11 +35,14 @@ public class LoginActivity extends AppCompatActivity implements
     private GoogleApiClient mGoogleApiClient;
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
+    GlobalState state;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        state = ((GlobalState) getApplication() );
 
         // Views
         mStatusTextView = (TextView) findViewById(R.id.status);
@@ -52,18 +55,18 @@ public class LoginActivity extends AppCompatActivity implements
         // [START configure_signin]
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        state.setGso( new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
-                .build();
+                .build());
         // [END configure_signin]
 
         // [START build_client]
         // Build a GoogleApiClient with access to the Google Sign-In API and the
         // options specified by gso.
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
+        state.setGoogleApiClient(new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-                .build();
+                .addApi(Auth.GOOGLE_SIGN_IN_API, state.getGso())
+                .build());
         // [END build_client]
 
         // [START customize_button]
@@ -75,8 +78,8 @@ public class LoginActivity extends AppCompatActivity implements
         // Scopes.PLUS_LOGIN scope to the GoogleSignInOptions to see the
         // difference.
         SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
-        signInButton.setSize(SignInButton.SIZE_STANDARD);
-        signInButton.setScopes(gso.getScopeArray());
+        signInButton.setSize(SignInButton.SIZE_WIDE);
+        signInButton.setScopes(state.getGso().getScopeArray());
         // [END customize_button]
     }
 
@@ -84,7 +87,7 @@ public class LoginActivity extends AppCompatActivity implements
     public void onStart() {
         super.onStart();
 
-        OptionalPendingResult<GoogleSignInResult> opr = Auth.GoogleSignInApi.silentSignIn(mGoogleApiClient);
+        OptionalPendingResult<GoogleSignInResult> opr = Auth.GoogleSignInApi.silentSignIn(state.getGoogleApiClient());
         if (opr.isDone()) {
             // If the user's cached credentials are valid, the OptionalPendingResult will be "done"
             // and the GoogleSignInResult will be available instantly.
@@ -126,7 +129,16 @@ public class LoginActivity extends AppCompatActivity implements
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
-            updateUI(true);
+
+            state.setAcct(acct);
+
+            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+
+
+
+            //updateUI(true);
         } else {
             // Signed out, show unauthenticated UI.
             updateUI(false);
@@ -136,14 +148,14 @@ public class LoginActivity extends AppCompatActivity implements
 
     // [START signIn]
     private void signIn() {
-        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(state.getGoogleApiClient());
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
     // [END signIn]
 
     // [START signOut]
     private void signOut() {
-        Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(
+        Auth.GoogleSignInApi.signOut(state.getGoogleApiClient()).setResultCallback(
                 new ResultCallback<Status>() {
                     @Override
                     public void onResult(Status status) {
@@ -157,7 +169,7 @@ public class LoginActivity extends AppCompatActivity implements
 
     // [START revokeAccess]
     private void revokeAccess() {
-        Auth.GoogleSignInApi.revokeAccess(mGoogleApiClient).setResultCallback(
+        Auth.GoogleSignInApi.revokeAccess(state.getGoogleApiClient()).setResultCallback(
                 new ResultCallback<Status>() {
                     @Override
                     public void onResult(Status status) {
@@ -218,4 +230,5 @@ public class LoginActivity extends AppCompatActivity implements
                 break;
         }
     }
+
 }

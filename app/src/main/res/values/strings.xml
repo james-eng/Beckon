@@ -64,5 +64,6 @@
     <string name="name_auth_code_activity">ServerAuthCodeActivity</string>
     <string name="origin_image">Origin Image</string>
     <string name="finish_line">Finish Line</string>
+    <string name="logout">Logout</string>
 
 </resources>
