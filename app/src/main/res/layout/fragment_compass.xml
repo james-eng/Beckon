@@ -1,9 +1,11 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="org.orangeresearch.beckon.CompassFragment"
-    android:orientation="vertical">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context="org.orangeresearch.beckon.CompassFragment"
+                android:orientation="vertical"
+                android:weightSum="1"
+                android:padding="10dp">
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
@@ -11,12 +13,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAlignment="center"
-        android:layout_margin="5dp"
-        android:text="@string/beacon_title"/>
+        android:text="@string/beacon_title"
+        android:layout_gravity="center_horizontal|top"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        style="@android:style/TextAppearance.Holo.Widget.ActionBar.Title"/>
 
 
-
-    <ImageView
+<!--
+   <ImageView
         android:id="@+id/imageViewCompass"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -24,12 +31,138 @@
         android:src="@drawable/img_compass"
         android:visibility="visible"
         android:contentDescription="@string/arrow_pointer"/>
+-->
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/beacon_title"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/linearLayout"
+        android:gravity="center_vertical|center_horizontal"
+        android:layout_margin="2dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sentBy"
+            android:id="@+id/sentFixed"
+            android:padding="3dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/calculating"
+            android:id="@+id/sentBy"
+            android:padding="3dp"/>
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/house"
+        android:layout_gravity="start"
+        android:background="@android:color/transparent"
+        android:layout_marginLeft="0dp"
+        android:layout_marginRight="0dp"
+        android:id="@+id/houseImage"
+        android:layout_below="@id/linearLayout"
+        android:layout_alignStart="@id/linearLayout"
+        android:layout_marginTop="10dp"
+        android:contentDescription="@string/origin_image"/>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/checkered_flags"
+        android:layout_gravity="end"
+        android:background="@android:color/transparent"
+        android:layout_marginLeft="0dp"
+        android:layout_marginRight="0dp"
+        android:layout_below="@id/linearLayout"
+        android:layout_alignParentEnd="true"
+        android:id="@+id/flagImage"
+        android:layout_marginTop="10dp"
+        android:contentDescription="@string/finish_line"/>
+
+    <ProgressBar
+        style="@android:style/Widget.Holo.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/distanceProgressBar"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="0dp"
+        android:layout_marginRight="0dp"
+        android:layout_below="@id/flagImage"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"/>
+
 
     <TextView
         android:id="@+id/beacon_bearing"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAlignment="center"
-        android:text="@string/bearing"/>
+        android:text="@string/bearing"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"/>
 
-</LinearLayout>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/distance_from_home"
+        android:id="@+id/textView2"
+        android:layout_below="@+id/distanceProgressBar"
+        android:layout_marginTop="30dp"
+        android:layout_toEndOf="@+id/houseImage"/>
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/current_distance"
+        android:id="@+id/textView4"
+        android:layout_below="@+id/textView2"
+        android:layout_alignStart="@+id/textView2"
+        android:layout_marginTop="30dp"
+        android:singleLine="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/direction_to_target"
+        android:id="@+id/textView5"
+        android:layout_below="@+id/textView4"
+        android:layout_alignStart="@+id/textView4"
+        android:layout_marginTop="30dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/calculating"
+        android:id="@+id/distanceFromOrigin"
+        android:layout_marginTop="30dp"
+        android:layout_below="@id/distanceProgressBar"
+        android:layout_toStartOf="@id/flagImage"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/calculating"
+        android:id="@+id/distanceFromHere"
+        android:layout_below="@+id/textView2"
+        android:layout_marginTop="30dp"
+        android:layout_toStartOf="@id/flagImage"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/calculating"
+        android:id="@+id/direction"
+        android:layout_below="@+id/textView4"
+        android:layout_marginTop="30dp"
+        android:layout_toStartOf="@id/flagImage"/>
+
+
+</RelativeLayout>

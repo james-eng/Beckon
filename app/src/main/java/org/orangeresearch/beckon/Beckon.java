@@ -51,7 +51,8 @@ public class Beckon {
     public Beckon() {
         mId = UUID.randomUUID();
         mTitle = "Random Beacon 1";
-        mLat = "25.777754";
-        mLon = "-80.191793";
+        mSender = "Kareem Abdul Jabar";
+        mLat = "25.792892";
+        mLon = "-80.135361";
     }
 }

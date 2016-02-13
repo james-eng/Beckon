@@ -3,11 +3,8 @@ package org.orangeresearch.beckon;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.graphics.drawable.BitmapDrawable;
-import android.hardware.GeomagneticField;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -20,15 +17,14 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import java.text.DecimalFormat;
 
 
 /**
@@ -48,22 +44,35 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
 
     // JAMES Added Member Variables
     private static final String TAG = "COMPASS FRAGMENT";
+
     private Beckon mBeckon;
+
     private TextView mTitleField;
     private TextView mBearing;
-    private SensorManager mSensorManager;
-    private Sensor mOrientation;
+    private TextView mSentBy;
+    private TextView mDistanceFromHere;
+    private TextView mDistanceFromOrigin;
+    private TextView mDirection;
+
+
+
     private ImageView mCompassImage;
     private Context mContext;
     private LocationManager mLocationManager;
-    private float mCurrentDegree;
-    private Double mCurLat;
-    private Double mCurLon;
     private Location mCurDest;
     private Location mCurLoc;
-    private float[] rMat = new float[9];
-    private int mAzimuth = 0;
-    float[] orientation = new float[3];
+    private Location mOrigin;
+    private Double mTotalDistance;
+    private ProgressBar mProgressBar;
+
+
+    /* NEW VERSION OF COMPASS CODE */
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer, mField;
+
+
+    private float[] mGravity;
+    private float[] mMagnetic;
 
     final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
 
@@ -97,7 +106,8 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
     }
 
     private void registerSensorListener() {
-        mSensorManager.registerListener(this, mOrientation, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
+        mSensorManager.registerListener(this, mField, SensorManager.SENSOR_DELAY_UI);
     }
 
     private void unregisterSensorListener() {
@@ -107,15 +117,24 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mBeckon = new Beckon();
-        mSensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
-        mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
+        // Create a new Beckon to hold the destination information
+        mBeckon = new Beckon();
+
+        // Initialize the Sensor Manager and Sensors needed
+        mSensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mField = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+
+        // Create Location objects for current location and destination
         mCurDest = new Location("PROVIDED");
+        mOrigin = new Location("GPS");
         mCurLoc = new Location("GPS");
+
         mCurDest.setLatitude(Double.parseDouble(mBeckon.getLat()));
         mCurDest.setLongitude(Double.parseDouble(mBeckon.getLon()));
 
+        // Ensure GPS permissions are enabled
         int hasGpsPermission = ContextCompat.checkSelfPermission(this.getActivity(),
                 Manifest.permission.ACCESS_FINE_LOCATION);
 
@@ -125,16 +144,16 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
                     REQUEST_CODE_ASK_PERMISSIONS);
         }
 
+        // Get Location Service
         mLocationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
 
+        // Try for GPS first, fall back to network provided location
         if ( mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,this);
         } else {
             mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,0,0,this);
         }
 
-
-        mCurrentDegree = 0f;
 
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
@@ -153,9 +172,20 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
         mTitleField.setText(mBeckon.getTitle());
 
         mBearing = (TextView)v.findViewById(R.id.beacon_bearing);
-        mBearing.setText("Calculating...");
+        mBearing.setText(R.string.calculating);
 
-        mCompassImage = (ImageView)v.findViewById(R.id.imageViewCompass);
+        mSentBy = (TextView)v.findViewById(R.id.sentBy);
+        mSentBy.setText(new StringBuilder().append("  ").append(mBeckon.getSender()).toString());
+
+        mDistanceFromOrigin = (TextView)v.findViewById(R.id.distanceFromOrigin);
+        mDistanceFromHere = (TextView)v.findViewById(R.id.distanceFromHere);
+        mDirection = (TextView)v.findViewById(R.id.direction);
+
+        //mCompassImage = (ImageView)v.findViewById(R.id.imageViewCompass);
+
+        mProgressBar = (ProgressBar)v.findViewById(R.id.distanceProgressBar);
+        mProgressBar.getProgressDrawable().setColorFilter(Color.BLUE, PorterDuff.Mode.SRC_IN);
+
 
           return v;
     }
@@ -209,95 +239,53 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
         // PURPOSELY BLANK
     }
 
+
+    private void updateDirection() {
+
+        float[] temp = new float[9];
+        float[] R = new float[9];
+
+        //Load rotation matrix into R
+        SensorManager.getRotationMatrix(temp, null, mGravity, mMagnetic);
+
+        //Remap to camera's point-of-view
+        SensorManager.remapCoordinateSystem(temp, SensorManager.AXIS_X, SensorManager.AXIS_Z, R);
+
+        //Return the orientation values
+        float[] values = new float[3];
+
+        SensorManager.getOrientation(R, values);
+
+        //Convert to degrees
+        for (int i=0; i < values.length; i++) {
+            Double degrees = (values[i] * 180) / Math.PI;
+            values[i] = degrees.floatValue();
+        }
+        //Display the compass direction
+        //directionView.setText( getDirectionFromDegrees(values[0]) );
+        //Display the raw values
+        mBearing.setText(String.format("Azimuth: %1$1.2f, Pitch: %2$1.2f, Roll: %3$1.2f",
+                values[0], values[1], values[2]));
+    }
+
+
     @Override
     public void onSensorChanged(SensorEvent event){
 
-
-        float azimuth = event.values[0];
-       // azimuth = (float) Math.toDegrees(azimuth);
-
-        GeomagneticField geoField = new GeomagneticField( Double
-                .valueOf( mCurLoc.getLatitude() ).floatValue(), Double
-                .valueOf( mCurLoc.getLongitude() ).floatValue(),
-                Double.valueOf( mCurLoc.getAltitude() ).floatValue(),
-                System.currentTimeMillis() );
-
-        float[] v = event.values;
-
-        double lat=mCurDest.getLatitude();
-        double lon=mCurDest.getLongitude();
-
-        //The current location of the device, retrieved from another class managing GPS
-        double ourlat=  mCurLoc.getLatitude();
-        double ourlon=  mCurLoc.getLongitude();
-
-        //Manually calculate the direction of the pile from the device
-        double a= Math.abs((lon-ourlon));
-        double b= Math.abs((lat-ourlat));
-        //archtangent of a/b is equal to the angle of the device from 0-degrees in the first quadrant. (Think of a unit circle)
-        double thetaprime= Math.atan(a/b);
-        double theta= 0;
-
-        if((lat<ourlat)&&(lon>ourlon)){//-+
-            //theta is 180-thetaprime because it is in the 2nd quadrant
-            theta= ((Math.PI)-thetaprime);
-
-            //subtract theta from the compass value retrieved from the sensor to get our final direction
-            theta=theta - Math.toRadians(v[0]);
-
-        }else if((lat<ourlat)&&(lon<ourlon)){//--
-            //Add 180 degrees because it is in the third quadrant
-            theta= ((Math.PI)+thetaprime);
-
-            //subtract theta from the compass value retreived from the sensor to get our final direction
-            theta=theta - Math.toRadians(v[0]);
-
-        }else if((lat>ourlat)&&(lon>ourlon)){ //++
-            //No change is needed in the first quadrant
-            theta= thetaprime;
-
-            //subtract theta from the compass value retreived from the sensor to get our final direction
-            theta=theta - Math.toRadians(v[0]);
-
-        }else if((lat>ourlat)&&(lon<ourlon)){ //+-
-            //Subtract thetaprime from 360 in the fourth quadrant
-            theta= ((Math.PI*2)-thetaprime);
-
-            //subtract theta from the compass value retreived from the sensor to get our final direction
-            theta=theta - Math.toRadians(v[0]);
-
+        switch(event.sensor.getType()) {
+            case Sensor.TYPE_ACCELEROMETER:
+                mGravity = event.values.clone();
+                break;
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                mMagnetic = event.values.clone();
+                break;
+            default:
+                return;
         }
 
-        azimuth = (float) Math.toDegrees(theta);
-
-        /*
-        float myBearing = mCurLoc.bearingTo(mCurDest);
-        //azimuth += geoField.getDeclination();
-        azimuth = (myBearing - azimuth) * -1;
-
-        while (azimuth < 0)
-            azimuth += 360;
-        while (azimuth >= 360)
-            azimuth -= 360;
-*/
-        mCompassImage.setRotation(azimuth);
-
-        //This is where we choose to point it
-
-/*
-        RotateAnimation ra = new RotateAnimation(mCurrentDegree, direction,
-                Animation.RELATIVE_TO_SELF, 0.5f,
-                Animation.RELATIVE_TO_SELF,
-                0.5f);
-        ra.setDuration(210);
-        ra.setFillAfter(true);
-        mCompassImage.startAnimation(ra);
-*/
-
-        Log.d(TAG, "Azimuth: "+String.valueOf(azimuth));
-        String setText = "Azimuth: "+String.valueOf(azimuth);
-        mBearing.setText(setText);
-
+        if(mGravity != null && mMagnetic != null) {
+            updateDirection();
+        }
 
     }
 
@@ -320,9 +308,25 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
     @Override
     public void onLocationChanged(Location location){
 
+        double distance;
+
+        if (mOrigin.getLongitude() == 0) {
+            mOrigin = location;
+           distance = mOrigin.distanceTo(mCurDest);
+            mDistanceFromOrigin.setText(Double.toString(convertMetersToFeet(distance)));
+            mTotalDistance = distance;
+        }
+
         mCurLoc = location;
-        //mCurLoc.setLongitude(location.getLongitude());
-        //mCurLoc.setLatitude(location.getLatitude());
+        distance = mCurLoc.distanceTo(mCurDest);
+        mDistanceFromHere.setText(Double.toString(convertMetersToFeet(distance)));
+
+        Double pComplete = 100 * (1 - distance / mTotalDistance);
+        if (pComplete < 0.0)
+            pComplete = 0.0;
+
+        mProgressBar.setProgress(pComplete.intValue());
+        setDirection(mCurLoc.bearingTo(mCurDest));
 
     }
 
@@ -339,6 +343,36 @@ public class CompassFragment extends Fragment implements  LocationListener, Sens
     @Override
     public void onProviderDisabled(String provider) {
         // Nothing Yet
+    }
+
+    private double convertMetersToFeet(double meters)
+    {
+        //function converts Feet to Meters.
+        double toFeet;
+        toFeet = meters*3.2808;  // official conversion rate of Meters to Feet
+        String formattedNumber = new DecimalFormat("0").format(toFeet); //return with 4 decimal places
+        return Double.valueOf(formattedNumber.trim());
+    }
+
+    private void setDirection ( float bearTo ){
+        //Set the field
+
+        if ( bearTo < 0 )
+            bearTo += 360;
+
+        String bearingText;
+
+        if ( (360 >= bearTo && bearTo >= 337.5) || (0 <= bearTo && bearTo <= 22.5) ) bearingText = "N";
+        else if (bearTo > 22.5 && bearTo < 67.5) bearingText = "NE";
+        else if (bearTo >= 67.5 && bearTo <= 112.5) bearingText = "E";
+        else if (bearTo > 112.5 && bearTo < 157.5) bearingText = "SE";
+        else if (bearTo >= 157.5 && bearTo <= 202.5) bearingText = "S";
+        else if (bearTo > 202.5 && bearTo < 247.5) bearingText = "SW";
+        else if (bearTo >= 247.5 && bearTo <= 292.5) bearingText = "W";
+        else if (bearTo > 292.5 && bearTo < 337.5) bearingText = "NW";
+        else bearingText = "?";
+
+        mDirection.setText(bearingText);
     }
 
 
