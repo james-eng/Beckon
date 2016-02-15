@@ -5,7 +5,8 @@
                 tools:context="org.orangeresearch.beckon.CompassFragment"
                 android:orientation="vertical"
                 android:weightSum="1"
-                android:padding="10dp">
+                android:padding="10dp"
+                android:background="@android:color/holo_green_dark">
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
@@ -19,7 +20,8 @@
         android:layout_marginRight="5dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        style="@android:style/TextAppearance.Holo.Widget.ActionBar.Title"/>
+        style="@android:style/TextAppearance.Holo.Widget.ActionBar.Title"
+        android:textColor="#fbfbfd"/>
 
 
 <!--
@@ -48,19 +50,21 @@
             android:layout_height="wrap_content"
             android:text="@string/sentBy"
             android:id="@+id/sentFixed"
-            android:padding="3dp"/>
+            android:padding="3dp"
+            android:textColor="#fbfbfd"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/calculating"
             android:id="@+id/sentBy"
-            android:padding="3dp"/>
+            android:padding="3dp"
+            android:textColor="#fbfbfd"/>
     </LinearLayout>
 
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
         android:src="@drawable/house"
         android:layout_gravity="start"
         android:background="@android:color/transparent"
@@ -73,16 +77,16 @@
         android:contentDescription="@string/origin_image"/>
 
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/checkered_flags"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:src="@drawable/beckon_small"
         android:layout_gravity="end"
         android:background="@android:color/transparent"
         android:layout_marginLeft="0dp"
         android:layout_marginRight="0dp"
         android:layout_below="@id/linearLayout"
         android:layout_alignParentEnd="true"
-        android:id="@+id/flagImage"
+        android:id="@+id/beaconImage"
         android:layout_marginTop="10dp"
         android:contentDescription="@string/finish_line"/>
 
@@ -94,7 +98,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginLeft="0dp"
         android:layout_marginRight="0dp"
-        android:layout_below="@id/flagImage"
+        android:layout_below="@id/beaconImage"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"/>
 
@@ -106,16 +110,18 @@
         android:textAlignment="center"
         android:text="@string/bearing"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        android:textColor="#fbfbfd"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/distance_from_home"
         android:id="@+id/textView2"
-        android:layout_below="@+id/distanceProgressBar"
-        android:layout_marginTop="30dp"
-        android:layout_toEndOf="@+id/houseImage"/>
+        android:layout_alignTop="@+id/distanceFromOrigin"
+        android:layout_alignStart="@+id/houseImage"
+        android:layout_marginStart="20dp"
+        android:textColor="#fbfbfd"/>
 
 
     <TextView
@@ -126,7 +132,8 @@
         android:layout_below="@+id/textView2"
         android:layout_alignStart="@+id/textView2"
         android:layout_marginTop="30dp"
-        android:singleLine="true"/>
+        android:singleLine="true"
+        android:textColor="#fbfbfd"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -135,16 +142,19 @@
         android:id="@+id/textView5"
         android:layout_below="@+id/textView4"
         android:layout_alignStart="@+id/textView4"
-        android:layout_marginTop="30dp"/>
+        android:layout_marginTop="30dp"
+        android:textColor="#fbfbfd"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/calculating"
         android:id="@+id/distanceFromOrigin"
-        android:layout_marginTop="30dp"
-        android:layout_below="@id/distanceProgressBar"
-        android:layout_toStartOf="@id/flagImage"/>
+        android:layout_marginTop="34dp"
+        android:layout_below="@+id/distanceProgressBar"
+        android:layout_alignEnd="@+id/beaconImage"
+        android:layout_marginEnd="30dp"
+        android:textColor="#fbfbfd"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -153,7 +163,9 @@
         android:id="@+id/distanceFromHere"
         android:layout_below="@+id/textView2"
         android:layout_marginTop="30dp"
-        android:layout_toStartOf="@id/flagImage"/>
+        android:layout_alignEnd="@+id/beaconImage"
+        android:layout_marginEnd="30dp"
+        android:textColor="#fbfbfd"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -162,7 +174,9 @@
         android:id="@+id/direction"
         android:layout_below="@+id/textView4"
         android:layout_marginTop="30dp"
-        android:layout_toStartOf="@id/flagImage"/>
+        android:layout_alignEnd="@+id/beaconImage"
+        android:layout_marginEnd="30dp"
+        android:textColor="#fbfbfd"/>
 
 
 </RelativeLayout>

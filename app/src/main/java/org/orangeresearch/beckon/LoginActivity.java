@@ -2,6 +2,7 @@ package org.orangeresearch.beckon;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -19,7 +20,6 @@ import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 
-import org.orangeresearch.beckon.R;
 
 /**
  * Activity to demonstrate basic retrieval of the Google user's ID, email address, and basic
@@ -32,7 +32,6 @@ public class LoginActivity extends AppCompatActivity implements
     private static final String TAG = "LogInActivity";
     private static final int RC_SIGN_IN = 9001;
 
-    private GoogleApiClient mGoogleApiClient;
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
     GlobalState state;
@@ -44,30 +43,37 @@ public class LoginActivity extends AppCompatActivity implements
 
         state = ((GlobalState) getApplication() );
 
+
         // Views
         mStatusTextView = (TextView) findViewById(R.id.status);
 
         // Button listeners
         findViewById(R.id.sign_in_button).setOnClickListener(this);
         findViewById(R.id.sign_out_button).setOnClickListener(this);
-        findViewById(R.id.disconnect_button).setOnClickListener(this);
+        findViewById(R.id.proceed_button).setOnClickListener(this);
+
 
         // [START configure_signin]
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
-        state.setGso( new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+
+        state.setGso(new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build());
+
         // [END configure_signin]
 
         // [START build_client]
         // Build a GoogleApiClient with access to the Google Sign-In API and the
         // options specified by gso.
+
         state.setGoogleApiClient(new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, state.getGso())
                 .build());
+
         // [END build_client]
+
 
         // [START customize_button]
         // Customize sign-in button. The sign-in button can be displayed in
@@ -81,6 +87,8 @@ public class LoginActivity extends AppCompatActivity implements
         signInButton.setSize(SignInButton.SIZE_WIDE);
         signInButton.setScopes(state.getGso().getScopeArray());
         // [END customize_button]
+
+
     }
 
     @Override
@@ -107,6 +115,7 @@ public class LoginActivity extends AppCompatActivity implements
                 }
             });
         }
+
     }
 
     // [START onActivityResult]
@@ -130,15 +139,19 @@ public class LoginActivity extends AppCompatActivity implements
             GoogleSignInAccount acct = result.getSignInAccount();
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
 
+
+
             state.setAcct(acct);
 
-            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
+            if(!state.isLogOut()) {
+                startMainActivity();
+            }
+            else {
+                state.setLogOut(false);
+                //revokeAccess();
+            }
 
-
-
-            //updateUI(true);
+            updateUI(true);
         } else {
             // Signed out, show unauthenticated UI.
             updateUI(false);
@@ -216,6 +229,15 @@ public class LoginActivity extends AppCompatActivity implements
         }
     }
 
+    public void startMainActivity(){
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        finish();
+
+    }
+
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -225,8 +247,8 @@ public class LoginActivity extends AppCompatActivity implements
             case R.id.sign_out_button:
                 signOut();
                 break;
-            case R.id.disconnect_button:
-                revokeAccess();
+            case R.id.proceed_button:
+                startMainActivity();
                 break;
         }
     }

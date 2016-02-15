@@ -46,7 +46,7 @@
 
     <!-- Button labels -->
     <string name="sign_out">Sign Out</string>
-    <string name="disconnect">Disconnect</string>
+    <string name="proceed">Continue</string>
 
     <!-- Content Description for images -->
     <string name="desc_google_icon">Google Logo</string>

@@ -1,5 +1,8 @@
 package org.orangeresearch.beckon;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -8,6 +11,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.LayoutInflaterCompat;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -23,8 +27,16 @@ import android.widget.TextView;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.squareup.picasso.Picasso;
 
 import org.w3c.dom.Text;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 
 public class MainActivity extends FragmentActivity
         implements CompassFragment.OnFragmentInteractionListener,NavigationView.OnNavigationItemSelectedListener {
@@ -74,7 +86,13 @@ public class MainActivity extends FragmentActivity
         mUserEmail = (TextView) headerView.findViewById(R.id.userEmail);
         mUserEmail.setText(state.getAcct().getEmail());
         mUserImage = (ImageView) headerView.findViewById(R.id.userImage);
-        mUserImage.setImageURI(state.getAcct().getPhotoUrl());
+
+        Picasso.with(getApplicationContext())
+                .load(state.getAcct().getPhotoUrl())
+                .resize(200,200)
+                .onlyScaleDown()
+                .centerCrop()
+                .into(mUserImage);
 
 
         FragmentManager fm = getSupportFragmentManager();
@@ -137,17 +155,26 @@ public class MainActivity extends FragmentActivity
         } else if (id == R.id.nav_send) {
 
         } else if (id == R.id.logout) {
-            /*
+
+            state.setLogOut(true);
+            Intent intent = new Intent( MainActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.putExtra("LOGOUT","TRUE");
+            startActivity(intent);
+
+/*
             Auth.GoogleSignInApi.signOut(state.getGoogleApiClient()).setResultCallback(
                     new ResultCallback<Status>() {
                         @Override
                         public void onResult(Status status) {
                             // [START_EXCLUDE]
-                            //updateUI(false);
+                            Intent intent = new Intent( MainActivity.this, LoginActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(intent);
                             // [END_EXCLUDE]
                         }
                     });
-            */
+*/
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -158,4 +185,5 @@ public class MainActivity extends FragmentActivity
     public void onFragmentInteraction(Uri uri){
         //you can leave it empty
     }
+
 }
